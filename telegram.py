@@ -7,7 +7,6 @@ from os import path
 
 def msghandler(msg):
     global DATA, echo, msgid
-    pprint(msg)
     chat_type = msg['chat']['type']
 
     try: text = msg['text']
@@ -21,25 +20,26 @@ def msghandler(msg):
         elif (chat_type == 'group') | (chat_type == 'supergroup'):
             group_id, user_id = msg['chat']['id'], msg['from']['id']
     
-   
-    if user_id in DATA['groups'][0].users:
-        if user_id == DATA['admin']:
-            if text == 'admin@help':
-                BOT.sendMessage(DATA['admin'],"LIST OF COMMANDS YOU CAN EXECUTE")
-                return
-            elif text == 'admin@echo':
-                if echo: echo=0
-                else: echo = 1
-                return
-            elif text == 'button':
-                BOT.sendMessage(DATA['groups'][0].id,"Quanti a pranzo oggi?",reply_markup = keyboard)
-                return
-            
-        #UNDERSTAND THE CONTENT OF TEXT     
-        conf = textanalysis.compatibility(text,DATASET)#: pass#print(user_id," ha cancellato")
-        if conf>0.7 and conf<1:
-            textanalysis.savein('dataset/LUNCH.dat',text)
-            DATASET.append(text.split(" "))
+    for g in DATA['groups']:
+
+        if user_id in g.users:
+            if user_id == DATA['admin']:
+                if text == 'admin@help':
+                    BOT.sendMessage(DATA['admin'],"LIST OF COMMANDS YOU CAN EXECUTE")
+                    return
+                elif text == 'admin@echo':
+                    if echo: echo=0
+                    else: echo = 1
+                    return
+                elif text == 'button':
+                    BOT.sendMessage(DATA['groups'][0].id,"Quanti a pranzo oggi?",reply_markup = keyboard)
+                    return
+                
+            #UNDERSTAND THE CONTENT OF TEXT     
+            conf = textanalysis.compatibility(text,DATASET)#: pass#print(user_id," ha cancellato")
+            if conf>0.7 and conf<1:
+                textanalysis.savein('dataset/LUNCH.dat',text)
+                DATASET.append(text.split(" "))
         
     
     else:#AUTHENTICATION
@@ -61,12 +61,16 @@ def msghandler(msg):
     if echo: BOT.sendMessage(DATA['admin'],str(user_id) + ': ' + text)
 
 def on_callback_query(msg):
-
+    global lunchpeople
     query_id, from_id, query_data = telepot.glance(msg, flavor = 'callback_query')
     
     BOT.answerCallbackQuery(query_id,text="Ricevuto")
     
     msgid = int(str(msg['message']['chat']['id'])+str(msg['message']['message_id']))
+    sender = msg['from']['id']
+    if not sender in lunchpeople: lunchpeople.append(sender)
+
+    print(lunchpeople)
     print(msgid)
 
 
@@ -79,14 +83,17 @@ def getallids(groupid):
     return ids
    
 def main():
-    global DATA,echo,DATASET, BOT,msgid,keyboard
+    global DATA,echo,DATASET, BOT,msgid,keyboard, lunchpeople
 
     if not path.exists(DATAFILE):
-        values = ['','','','']
+        values = {}
         tvalues = ['ADMIN ID','TOKEN','USERNAME','PASSWORD']
-        for times in range(len(values)):
-            while values[times] == '':
-                values[times] = input(tvalues[times]+': ')
+        keys = ['admin','token','user','pw']
+        for times in range(len(keys)):
+            values[keys[times]] = ''
+            while values[keys[times]] == '':
+                values[keys[times]] = input(tvalues[times]+': ')
+        values['groups'] = []
         setup.saveData(DATAFILE,values,'w')
     
     
@@ -103,17 +110,20 @@ def main():
 
     echo = 0
     setup.logmanager('log','ciao')
+
+    lunchpeople = []
     while 1:
         time.sleep(2)
         t = time.localtime().tm_hour
         if t == 0:
             #CONTROLLARE CHE TUTTI GLI UTENTI DI UN GRUPPO SIANO SALVATI
-
+            setup.saveData(DATAFILE,DATA,'w')
             #SALVARE LE VARIABILI SU FILE
             pass#RESET DATA
         elif (t == 17) and not DATA['groups'][0].var['islunchasked']:
             BOT.sendMessage(DATA['groups'][0].id,"Quanti a pranzo oggi?",reply_markup = keyboard)
-            DATA['groups'].var['islunchasked'] = 1
+            DATA['groups'][0].var['islunchasked'] = 1
+            setup.saveData(DATAFILE,DATA,'w')
 
 
 

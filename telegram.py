@@ -6,8 +6,8 @@ import os.path
 from os import path
 
 def msghandler(msg):
-    global DATA, echo
-
+    global DATA, echo, msgid
+    pprint(msg)
     chat_type = msg['chat']['type']
 
     try: text = msg['text']
@@ -20,6 +20,7 @@ def msghandler(msg):
             user_id = msg['chat']['id']
         elif (chat_type == 'group') | (chat_type == 'supergroup'):
             group_id, user_id = msg['chat']['id'], msg['from']['id']
+    
    
     if user_id in DATA['groups'][0].users:
         if user_id == DATA['admin']:
@@ -29,6 +30,9 @@ def msghandler(msg):
             elif text == 'admin@echo':
                 if echo: echo=0
                 else: echo = 1
+                return
+            elif text == 'button':
+                BOT.sendMessage(DATA['groups'][0].id,"Quanti a pranzo oggi?",reply_markup = keyboard)
                 return
             
         #UNDERSTAND THE CONTENT OF TEXT     
@@ -59,8 +63,13 @@ def msghandler(msg):
 def on_callback_query(msg):
 
     query_id, from_id, query_data = telepot.glance(msg, flavor = 'callback_query')
+    
     BOT.answerCallbackQuery(query_id,text="Ricevuto")
-  
+    
+    msgid = int(str(msg['message']['chat']['id'])+str(msg['message']['message_id']))
+    print(msgid)
+
+
 def getallids(groupid):
     ids = [groupid]
 
@@ -70,7 +79,7 @@ def getallids(groupid):
     return ids
    
 def main():
-    global DATA,echo,DATASET, BOT
+    global DATA,echo,DATASET, BOT,msgid,keyboard
 
     if not path.exists(DATAFILE):
         values = ['','','','']
@@ -93,7 +102,7 @@ def main():
     BOT.message_loop({'chat': msghandler,'callback_query' : on_callback_query})
 
     echo = 0
-    setup.logmanager('log')
+    setup.logmanager('log','ciao')
     while 1:
         time.sleep(2)
         t = time.localtime().tm_hour
@@ -111,5 +120,7 @@ def main():
 
 #MACROS
 DATAFILE = 'setup.xml'
+LOGPATH = 'log'
+
 
 if __name__ == "__main__": main()

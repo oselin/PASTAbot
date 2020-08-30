@@ -82,7 +82,7 @@ def saveData(PATHFILE,data,mod):
     tree._setroot(root)
     tree.write(DATAFILE)
 
-def logmanager(PATH):
+def logmanager(PATH, content):
     date = str(time.localtime().tm_year)
     month = time.localtime().tm_mon
     day = time.localtime().tm_mday
@@ -94,3 +94,5 @@ def logmanager(PATH):
 
     f = open(PATH + '/' + date,'a')
 
+    f.write(content+'\n')
+    f.close()

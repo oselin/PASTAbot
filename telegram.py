@@ -70,10 +70,11 @@ def on_callback_query(msg):
     sender = msg['from']['id']
     if not sender in lunchpeople: lunchpeople.append(sender)
 
-    print(lunchpeople)
-    print(msgid)
-
-
+def lunchactions():
+    global BOT, DATA
+    BOT.sendMessage(DATA['groups'][0].id,"Quanti a pranzo oggi?",reply_markup = keyboard)
+    DATA['groups'][0].var['islunchasked'] = 1
+    setup.saveData(DATAFILE,DATA)
 def getallids(groupid):
     ids = [groupid]
 
@@ -112,18 +113,16 @@ def main():
     setup.logmanager('log','ciao')
 
     lunchpeople = []
+
+
     while 1:
         time.sleep(2)
         t = time.localtime().tm_hour
         if t == 0:
-            #CONTROLLARE CHE TUTTI GLI UTENTI DI UN GRUPPO SIANO SALVATI
-            setup.saveData(DATAFILE,DATA,'w')
-            #SALVARE LE VARIABILI SU FILE
-            pass#RESET DATA
-        elif (t == 17) and not DATA['groups'][0].var['islunchasked']:
-            BOT.sendMessage(DATA['groups'][0].id,"Quanti a pranzo oggi?",reply_markup = keyboard)
-            DATA['groups'][0].var['islunchasked'] = 1
-            setup.saveData(DATAFILE,DATA,'w')
+            setup.saveData(DATAFILE,DATA)
+        elif (t == 11) and not DATA['groups'][0].var['islunchasked']:
+            lunchactions()
+        #elif t==lunchtime: START COOKING
 
 
 

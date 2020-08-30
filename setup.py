@@ -50,7 +50,7 @@ def getData(DATAFILE):
             data['groups'].append(g)
     return data
 
-def saveData(PATHFILE,data,mod):
+def saveData(PATHFILE,data):
 
     tree = ET.ElementTree()    
 

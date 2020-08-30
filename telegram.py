@@ -9,6 +9,7 @@ def msghandler(msg):
     global DATA, echo
 
     chat_type = msg['chat']['type']
+
     try: text = msg['text']
     except: text = ""
 
@@ -24,24 +25,20 @@ def msghandler(msg):
         if user_id == DATA['admin']:
             if text == 'admin@help':
                 BOT.sendMessage(DATA['admin'],"LIST OF COMMANDS YOU CAN EXECUTE")
-
+                return
             elif text == 'admin@echo':
                 if echo: echo=0
                 else: echo = 1
-            #elif text ==
-            else:
-                conf = textanalysis.compatibility(text,DATASET)#: pass#print(user_id," ha cancellato")
-                if conf>0.7 and conf<1:
-                    textanalysis.savein('dataset/LUNCH.dat',text)
-                    DATASET.append(text.split(" "))
-        else:
-            #UNDERSTAND THE CONTENT OF TEXT     
-            conf = textanalysis.compatibility(text,DATASET)#: pass#print(user_id," ha cancellato")
-            if conf>0.7 and conf<1:
-                textanalysis.savein('dataset/LUNCH.dat',text)
-                DATASET.append(text.split(" "))
-            #BOT.sendMessage(IDs[0],"CONFIDENCE: " + str(textanalysis.compatibility(text,DATASET)))
-    else:
+                return
+            
+        #UNDERSTAND THE CONTENT OF TEXT     
+        conf = textanalysis.compatibility(text,DATASET)#: pass#print(user_id," ha cancellato")
+        if conf>0.7 and conf<1:
+            textanalysis.savein('dataset/LUNCH.dat',text)
+            DATASET.append(text.split(" "))
+        
+    
+    else:#AUTHENTICATION
         if text[:5] == "auth@": 
             if textanalysis.authentication(text[5:],DATA):
                 #SAVEGROUP AND USER IN XML FILE
@@ -60,27 +57,21 @@ def msghandler(msg):
     if echo: BOT.sendMessage(DATA['admin'],str(user_id) + ': ' + text)
 
 def on_callback_query(msg):
-    #global howmuchpasta
+
     query_id, from_id, query_data = telepot.glance(msg, flavor = 'callback_query')
     BOT.answerCallbackQuery(query_id,text="Ricevuto")
-    #howmuchpasta.append(msg['from']['id'])
-
-def setBot(TOKEN):
-    global BOT 
-    BOT = telepot.Bot(TOKEN)
-
-def startbot():
-    BOT.message_loop({'chat': msghandler,'callback_query' : on_callback_query})
-
+  
 def getallids(groupid):
     ids = [groupid]
-     #IMPLEMENT CLASS APPROACH
+
     for person in BOT.getChatAdministrators(int(groupid)):
         if not person['user']['is_bot']: ids.append(person['user']['id'])
+
     return ids
    
 def main():
-    global DATA,echo,DATASET
+    global DATA,echo,DATASET, BOT
+
     if not path.exists(DATAFILE):
         values = ['','','','']
         tvalues = ['ADMIN ID','TOKEN','USERNAME','PASSWORD']
@@ -92,14 +83,17 @@ def main():
     
     
     DATA = setup.getData(DATAFILE)
+
     DATASET = textanalysis.loadexamples('dataset/LUNCH.dat')
     
     keyboard = InlineKeyboardMarkup(inline_keyboard = [[InlineKeyboardButton(text = "Conferma",callback_data = "pressed")],])
 
-    setBot(DATA['token'])
-    startbot()
+    BOT = telepot.Bot(DATA['token'])
+
+    BOT.message_loop({'chat': msghandler,'callback_query' : on_callback_query})
 
     echo = 0
+    setup.logmanager('log')
     while 1:
         time.sleep(2)
         t = time.localtime().tm_hour
@@ -113,7 +107,9 @@ def main():
             DATA['groups'].var['islunchasked'] = 1
 
 
-#DEFINE
+
+
+#MACROS
 DATAFILE = 'setup.xml'
 
 if __name__ == "__main__": main()

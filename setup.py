@@ -3,12 +3,24 @@ import time
 from pprint import pprint
 
 
+"""
+
+STRUCT DATA
+
+DATA = {
+    'admin'    : string
+    'token'    : string
+    'user'     : string
+    'password' : string
+    'groups'   : list of class Group
+}
+"""
+
 class Group:
     var = {}
     id = ""
     users = []
 
-#DATAFILE = 'setup.xml'
 def getData(DATAFILE):
 
     data = {'groups' : []}
@@ -16,10 +28,10 @@ def getData(DATAFILE):
     root = ET.parse(DATAFILE).getroot()
     for child in root:
         if child.tag == 'admin':
-            data['admin'] = int(child.attrib['value'])
+            data[child.tag] = int(child.attrib['value'])
 
         elif child.tag == 'token':
-            data['token'] = child.attrib['value']
+            data[child.tag] = child.attrib['value']
 
         elif child.tag == 'user':
             data[child.tag] = child.attrib['value']
@@ -38,9 +50,9 @@ def getData(DATAFILE):
     data['groups'].append(g)
     return data
 
-def saveData(DATAFILE,data,mod):
+def saveData(PATHFILE,data,mod):
     tree = ET.ElementTree()
-    print(data)
+    
     if mod=='w':
         tags = ['admin','token','user','pw']
         root = ET.Element('data')
@@ -49,7 +61,7 @@ def saveData(DATAFILE,data,mod):
             el.attrib['value'] = data[x]
             root.append(el)
     else:
-        root = ET.parse(DATAFILE).getroot()
+        root = ET.parse(PATHFILE).getroot()
 
         for g in data['groups']:
             master = ET.Element('group')
@@ -70,10 +82,10 @@ def saveData(DATAFILE,data,mod):
     tree._setroot(root)
     tree.write(DATAFILE)
 
-def logmanager():
+def logmanager(PATH):
+    date = str(time.localtime().tm_year)
     month = time.localtime().tm_mon
-    date = time.localtime().tm_mday
-    
+    day = time.localtime().tm_mday
     if month < 10: date += '0' + str(month)
     else: date += str(month)
 
